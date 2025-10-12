@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 type Lang = "ar" | "en";
 
-// ✅ نوع عام للترجمات: كل المفاتيح قيمها string (مش literal types)
 type Translations = {
   startShopping: string;
   addToCart: string;
@@ -17,9 +16,9 @@ type Translations = {
   orders: string;
   help: string;
   account: string;
+  catalog: string; // ✅ مضاف
 };
 
-// ✅ القاموس مطابق لـ Record<Lang, Translations>
 const dictionary: Record<Lang, Translations> = {
   ar: {
     startShopping: "ابدأ التسوّق",
@@ -33,6 +32,7 @@ const dictionary: Record<Lang, Translations> = {
     orders: "طلباتي",
     help: "المساعدة",
     account: "حسابي",
+    catalog: "الكتالوج", // ✅ مضاف
   },
   en: {
     startShopping: "Start shopping",
@@ -46,6 +46,7 @@ const dictionary: Record<Lang, Translations> = {
     orders: "Orders",
     help: "Help",
     account: "My Account",
+    catalog: "Catalog", // ✅ مضاف
   },
 };
 
@@ -64,7 +65,6 @@ const LangCtx = createContext<LangContextType>({
 export default function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>("ar");
 
-  // استرجاع اللغة من localStorage إن وجدت
   useEffect(() => {
     try {
       const saved = localStorage.getItem("lang") as Lang | null;
@@ -72,11 +72,9 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
     } catch {}
   }, []);
 
-  // حفظ اللغة عند التغيير
   useEffect(() => {
     try {
       localStorage.setItem("lang", lang);
-      // ضبط اتجاه الصفحة لو حبيت
       if (typeof document !== "undefined") {
         document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
         document.documentElement.lang = lang;
@@ -84,7 +82,7 @@ export default function LanguageProvider({ children }: { children: React.ReactNo
     } catch {}
   }, [lang]);
 
-  const t = useMemo<Translations>(() => dictionary[lang], [lang]);
+  const t = useMemo(() => dictionary[lang], [lang]);
 
   return <LangCtx.Provider value={{ lang, setLang, t }}>{children}</LangCtx.Provider>;
 }
