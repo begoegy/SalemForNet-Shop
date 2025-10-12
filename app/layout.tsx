@@ -1,5 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
+import Providers from "./providers";
 import { AuthProvider } from "@/context/AuthContext";
 import Link from "next/link";
 import Footer from "@/components/Footer";
@@ -13,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body className="min-h-screen flex flex-col bg-[#f9f9f9] text-gray-900">
-        <AuthProvider>
+        <Providers>
           {/* ======= Header ======= */}
           <header className="sticky top-0 z-50 backdrop-blur bg-white border-b border-gray-200 shadow-sm">
             <div className="max-w-7xl mx-auto h-14 px-4 flex items-center justify-between">
@@ -48,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           {/* ======= Footer ======= */}
           <Footer />
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
