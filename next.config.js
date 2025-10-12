@@ -1,9 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    // اهم سطر: اقفل التايبد روتس
-    typedRoutes: false,
-  },
-};
-
+const nextConfig = { images: { unoptimized: true } };
 module.exports = nextConfig;
