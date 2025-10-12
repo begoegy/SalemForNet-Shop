@@ -9,11 +9,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { firebaseEnabled, db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "@/context/AuthContext"; // ✅ موحّد مع layout.tsx
+import { useAuth } from "@/context/AuthContext"; // موحّد مع layout.tsx
+import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
   const { items, clear } = useCart();
-  const { user, loading } = useAuth(); // ✅ نقرأ حالة التحميل
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   const products = data as any[];
   const rows = items
@@ -43,8 +45,6 @@ export default function CheckoutPage() {
   const placeOrder = async () => {
     try {
       setStatus("saving");
-
-      // لازم ننتظر انتهاء التحميل ووجود مستخدم
       if (loading) return;
       if (!user) {
         setStatus("fail");
@@ -54,7 +54,7 @@ export default function CheckoutPage() {
 
       if (firebaseEnabled) {
         const payload = {
-          userId: user.uid, // ✅ يطابق القواعد
+          userId: user.uid,
           items: rows.map((r) => ({
             product_id: r.p.id,
             sku: r.p.sku,
@@ -68,22 +68,20 @@ export default function CheckoutPage() {
             email: user.email || "",
             phone,
           },
-          payment: {
-            method: "cod",
-            status: "pending",
-          },
+          payment: { method: "cod", status: "pending" },
           created_at: serverTimestamp(),
-          // address, // لو عايز تحفظ العنوان، أضفه للقواعد أو ضعه داخل customer.address
+          // address, // لو عايز تحفظه: أضِفه للقواعد أو ضعْه داخل customer.address
         };
 
         const docRef = await addDoc(collection(db, "orders"), payload);
-        setOrderRef(docRef.id);
+        clear(); // فقط بعد نجاح الحفظ
+        router.push(`/orders?id=${docRef.id}`);
+        return;
       } else {
         setOrderRef("SFN-" + Date.now());
       }
 
       setStatus("ok");
-      clear();
     } catch (e) {
       console.error(e);
       setStatus("fail");
@@ -122,7 +120,7 @@ export default function CheckoutPage() {
         <div className="mt-4 flex items-center gap-3">
           <button
             onClick={placeOrder}
-            disabled={status === "saving" || loading} // ✅ نعطّل أثناء التحميل/الإرسال
+            disabled={status === "saving" || loading}
             className="px-4 py-2 rounded bg-black text-white disabled:opacity-60"
           >
             {loading ? "جارٍ التحقق..." : status === "saving" ? "جارٍ الإرسال..." : "تأكيد الطلب"}
