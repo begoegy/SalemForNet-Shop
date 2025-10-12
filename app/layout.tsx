@@ -4,6 +4,7 @@ import Providers from "./providers";
 import { AuthProvider } from "@/context/AuthContext";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import CartButton from "@/components/CartButton"; // ← إضافة زر السلة
 
 export const metadata = {
   title: "SalemForNet",
@@ -29,18 +30,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {/* Navigation */}
               <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-700">
                 <Link href="/" className="hover:text-red-600 transition">الرئيسية</Link>
-                <Link href="/products" className="hover:text-red-600 transition">المنتجات</Link>
-                <Link href="/offers" className="hover:text-red-600 transition">العروض</Link>
+                <Link href="/catalog" className="hover:text-red-600 transition">المنتجات</Link> {/* ← تعديل */}
+                <Link href="/catalog?offer=1" className="hover:text-red-600 transition">العروض</Link> {/* ← تعديل */}
                 <Link href="/contact" className="hover:text-red-600 transition">تواصل معنا</Link>
               </nav>
 
-              {/* Account button */}
-              <Link
-                href="/login"
-                className="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-semibold hover:bg-red-700 transition"
-              >
-                دخول / حسابي
-              </Link>
+              {/* Right actions: Cart + Account */}
+              <div className="flex items-center gap-3">
+                <CartButton /> {/* ← إضافة السلة بالبادچ */}
+                <Link
+                  href="/login"
+                  className="px-3 py-1.5 rounded-md bg-gray-900 text-white text-sm font-semibold hover:bg-red-700 transition"
+                >
+                  دخول / حسابي
+                </Link>
+              </div>
             </div>
           </header>
 
