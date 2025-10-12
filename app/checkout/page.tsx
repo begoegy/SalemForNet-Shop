@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import { useCart } from "@/components/cart/CartContext";
 import data from "@/data/products.json";
@@ -95,7 +94,7 @@ export default function CheckoutPage() {
                 className="w-full border rounded px-3 py-2"
                 value={address}
                 onChange={e => setAddress(e.target.value)}
-                placeholder="الشارع، المدينة، المحافظة"
+                placeholder="الشارع المدينة المحافظة"
               />
             </div>
           </div>
@@ -106,7 +105,7 @@ export default function CheckoutPage() {
               onClick={placeOrder}
               disabled={status === "saving"}
             >
-              {status === "saving" ? "جارٍ إنشاء الطلب..." : "تنفيذ الطلب"}
+              {status === "saving" ? "جار إنشاء الطلب..." : "تنفيذ الطلب"}
             </button>
             <Link className="underline" href="/cart">
               الرجوع للسلة
