@@ -1,9 +1,9 @@
-// ✅ Server Component — بدون useSearchParams
+// Server Component — بدون useSearchParams
 import Link from "next/link";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-// (اختياريين لكن مُفضّلين لتفادي مشاكل الـ prerender)
+// نمنع تصدير ثابت للصفحة عشان ما يحاولش يعمل prerender
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -12,7 +12,7 @@ export default function RegisterPage({
 }: {
   searchParams: SearchParams;
 }) {
-  // اقرأ بارام ref من لينك /register?ref=XXXX
+  // اقرأ ?ref= من URL
   const ref = typeof searchParams?.ref === "string" ? searchParams.ref : "";
 
   return (
@@ -26,7 +26,6 @@ export default function RegisterPage({
       ) : null}
 
       <form className="space-y-4" action="/api/register" method="post">
-        {/* مرّر ref للسيرفر لو موجود */}
         <input type="hidden" name="ref" value={ref} />
 
         <div>
