@@ -85,28 +85,33 @@ export default function Footer() {
             <h4 className="font-semibold text-white">التسوق</h4>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/products" className="hover:text-red-500">
+                <Link href="/catalog" className="hover:text-red-500">
                   كل المنتجات
                 </Link>
               </li>
               <li>
-                <Link href="/category/routers" className="hover:text-red-500">
+                <Link href="/catalog?cat=راوترات" className="hover:text-red-500">
                   راوترات
                 </Link>
               </li>
               <li>
-                <Link href="/category/access-points" className="hover:text-red-500">
+                <Link href="/catalog?cat=Access%20Point" className="hover:text-red-500">
                   Access Point
                 </Link>
               </li>
               <li>
-                <Link href="/category/switches" className="hover:text-red-500">
+                <Link href="/catalog?cat=سويتشات" className="hover:text-red-500">
                   سويتشات
                 </Link>
               </li>
               <li>
-                <Link href="/category/cables" className="hover:text-red-500">
+                <Link href="/catalog?cat=كابلات" className="hover:text-red-500">
                   كابلات وإكسسوارات
+                </Link>
+              </li>
+              <li>
+                <Link href="/catalog?offer=1" className="hover:text-red-500">
+                  العروض
                 </Link>
               </li>
             </ul>
@@ -136,6 +141,11 @@ export default function Footer() {
                   تواصل معنا
                 </Link>
               </li>
+              <li>
+                <Link href="/catalog?offer=1" className="hover:text-red-500">
+                  العروض
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -161,6 +171,11 @@ export default function Footer() {
               <li>
                 <Link href="/login" className="hover:text-red-500">
                   تسجيل الدخول
+                </Link>
+              </li>
+              <li>
+                <Link href="/catalog?offer=1" className="hover:text-red-500">
+                  العروض
                 </Link>
               </li>
             </ul>
@@ -214,11 +229,11 @@ export default function Footer() {
             <span className="font-semibold text-white">SalemForNet</span> — جميع الحقوق محفوظة.
           </p>
           <nav className="md:ms-auto flex items-center gap-4 text-xs text-gray-500">
-            <Link href="/policy/privacy" className="hover:text-red-500">
+            <Link href="/policies/privacy" className="hover:text-red-500">
               سياسة الخصوصية
             </Link>
             <span className="text-gray-600">|</span>
-            <Link href="/policy/terms" className="hover:text-red-500">
+            <Link href="/policies/terms" className="hover:text-red-500">
               الشروط والأحكام
             </Link>
           </nav>
