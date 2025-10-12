@@ -9,11 +9,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { firebaseEnabled, db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useAuth } from "@/context/AuthContext"; // ✅ موحّد مع layout.tsx
 
 export default function CheckoutPage() {
   const { items, clear } = useCart();
-  const { user } = useAuth();
+  const { user, loading } = useAuth(); // ✅ نقرأ حالة التحميل
 
   const products = data as any[];
   const rows = items
@@ -44,6 +44,8 @@ export default function CheckoutPage() {
     try {
       setStatus("saving");
 
+      // لازم ننتظر انتهاء التحميل ووجود مستخدم
+      if (loading) return;
       if (!user) {
         setStatus("fail");
         alert("سجّل الدخول أولاً لإتمام الطلب.");
@@ -51,9 +53,8 @@ export default function CheckoutPage() {
       }
 
       if (firebaseEnabled) {
-        // ✅ Payload مطابق للقواعد المقترحة
         const payload = {
-          userId: user.uid, // مهم جدًا
+          userId: user.uid, // ✅ يطابق القواعد
           items: rows.map((r) => ({
             product_id: r.p.id,
             sku: r.p.sku,
@@ -61,7 +62,7 @@ export default function CheckoutPage() {
             unit_price: r.p.price_egp ?? 0,
           })),
           total,
-          status: "placed", // قيمة مسموحة بالقواعد
+          status: "placed",
           customer: {
             name: name || user.displayName || "",
             email: user.email || "",
@@ -71,15 +72,13 @@ export default function CheckoutPage() {
             method: "cod",
             status: "pending",
           },
-          created_at: serverTimestamp(), // اسم الحقل snake_case
-          // لو عايز تحتفظ بالعنوان كحقل منفصل:
-          // address,
+          created_at: serverTimestamp(),
+          // address, // لو عايز تحفظ العنوان، أضفه للقواعد أو ضعه داخل customer.address
         };
 
         const docRef = await addDoc(collection(db, "orders"), payload);
         setOrderRef(docRef.id);
       } else {
-        // وضع بدون فايرستور (تجريبي)
         setOrderRef("SFN-" + Date.now());
       }
 
@@ -123,10 +122,10 @@ export default function CheckoutPage() {
         <div className="mt-4 flex items-center gap-3">
           <button
             onClick={placeOrder}
-            disabled={status === "saving"}
+            disabled={status === "saving" || loading} // ✅ نعطّل أثناء التحميل/الإرسال
             className="px-4 py-2 rounded bg-black text-white disabled:opacity-60"
           >
-            {status === "saving" ? "جارٍ الإرسال..." : "تأكيد الطلب"}
+            {loading ? "جارٍ التحقق..." : status === "saving" ? "جارٍ الإرسال..." : "تأكيد الطلب"}
           </button>
 
           {status === "ok" && (
