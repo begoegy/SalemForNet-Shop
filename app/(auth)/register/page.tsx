@@ -1,6 +1,6 @@
 "use client";
-import { auth, googleProvider } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,15 +9,6 @@ export default function RegisterPage() {
   const [name, setName] = useState(""); const [email, setEmail] = useState("");
   const [password, setPassword] = useState(""); const [err, setErr] = useState<string|undefined>();
   const router = useRouter();
-  
-  const googleSignup = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      router.push("/account");
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const register = async () => {
     setErr(undefined);
@@ -37,7 +28,6 @@ export default function RegisterPage() {
         <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="كلمة المرور" className="border rounded-2xl px-3 py-2 w-full"/>
         {err && <div className="text-red-600 text-sm">{err}</div>}
         <button onClick={register} className="bg-accent text-white px-4 py-2 rounded-2xl w-full">تسجيل</button>
-        <button onClick={googleSignup} className="border px-4 py-2 rounded-2xl w-full">إنشاء بـ Google</button>
         <div className="text-sm text-center">
           لديك حساب؟ <Link href="/login" className="text-accent">سجّل الدخول</Link>
         </div>

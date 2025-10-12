@@ -85,27 +85,27 @@ export default function Footer() {
             <h4 className="font-semibold text-white">التسوق</h4>
             <ul className="mt-3 space-y-2 text-sm">
               <li>
-                <Link href="/catalog" className="hover:text-red-500">
+                <Link href="/products" className="hover:text-red-500">
                   كل المنتجات
                 </Link>
               </li>
               <li>
-                <Link href="/catalog?cat=%D8%B1%D8%A7%D9%88%D8%AA%D8%B1%D8%A7%D8%AA" className="hover:text-red-500">
+                <Link href="/category/routers" className="hover:text-red-500">
                   راوترات
                 </Link>
               </li>
               <li>
-                <Link href="/catalog?cat=Access%20Point" className="hover:text-red-500">
+                <Link href="/category/access-points" className="hover:text-red-500">
                   Access Point
                 </Link>
               </li>
               <li>
-                <Link href="/catalog?cat=%D8%B3%D9%88%D9%8A%D8%AA%D8%B4%D8%A7%D8%AA" className="hover:text-red-500">
+                <Link href="/category/switches" className="hover:text-red-500">
                   سويتشات
                 </Link>
               </li>
               <li>
-                <Link href="/catalog?cat=%D9%83%D8%A7%D8%A8%D9%84%D8%A7%D8%AA" className="hover:text-red-500">
+                <Link href="/category/cables" className="hover:text-red-500">
                   كابلات وإكسسوارات
                 </Link>
               </li>
@@ -214,11 +214,11 @@ export default function Footer() {
             <span className="font-semibold text-white">SalemForNet</span> — جميع الحقوق محفوظة.
           </p>
           <nav className="md:ms-auto flex items-center gap-4 text-xs text-gray-500">
-            <Link href="/policies/privacy" className="hover:text-red-500">
+            <Link href="/policy/privacy" className="hover:text-red-500">
               سياسة الخصوصية
             </Link>
             <span className="text-gray-600">|</span>
-            <Link href="/policies/terms" className="hover:text-red-500">
+            <Link href="/policy/terms" className="hover:text-red-500">
               الشروط والأحكام
             </Link>
           </nav>

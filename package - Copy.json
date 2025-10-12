@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "export:ids": "node tools/export-product-ids.mjs",
-    "fetch:images:id": "node tools/fetch-images-by-id.mjs"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.0",

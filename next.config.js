@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig = { typescript: { ignoreBuildErrors: true }, eslint: { ignoreDuringBuilds: true },
+  output: "standalone",
   images: { unoptimized: true },
-
-  // نتخطى أخطاء اللينت والتيب وقت البيلد فقط (عشان الديبلاي ينجح)
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  experimental: { typedRoutes: true }
 };
-
 module.exports = nextConfig;

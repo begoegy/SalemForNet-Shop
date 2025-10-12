@@ -13,9 +13,7 @@ export default function AccountPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
+    if (!loading && !user) router.replace("/login");
   }, [user, loading, router]);
 
   if (loading || !user) {
@@ -43,57 +41,44 @@ export default function AccountPage() {
         </div>
         <button
           onClick={() => signOut(auth)}
-          className="px-3 py-2 rounded-2xl border font-semibold hover:bg-gray-50"
+          className="shrink-0 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition"
         >
           تسجيل الخروج
         </button>
       </div>
 
-      {/* عناويني */}
-      <SectionCard title="عناويني" subtitle="(لاحقًا سنضيف عناوين الشحن والافتراضي منها)">
-        <div className="text-gray-600 text-sm">
-          لا توجد عناوين محفوظة بعد.
-        </div>
-      </SectionCard>
+      {/* الشبكة الرئيسية */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <SectionCard
+          title="العناوين"
+          subtitle="(لاحقًا نربط CRUD لـ addresses في Firestore)"
+          actions={
+            <button className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">
+              إضافة عنوان
+            </button>
+          }
+        >
+          <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-500">
+            لا توجد عناوين محفوظة بعد.
+          </div>
+        </SectionCard>
 
-      {/* الطلبات السابقة (ملخص) */}
-      <SectionCard
-        title="الطلبات السابقة"
-        subtitle="(لاحقًا نجلب Orders حسب user.uid)"
-        actions={<button className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">عرض الكل</button>}
-      >
-        <ul className="space-y-3">
-          <li className="rounded-xl border p-4 text-sm text-gray-600">
-            لا توجد طلبات حتى الآن.
-          </li>
-        </ul>
-      </SectionCard>
-
-      {/* طلباتي (من LocalStorage كحل مؤقت) */}
-      <SectionCard title="طلباتي">
-        <OrdersList />
-      </SectionCard>
-    </div>
-  );
-}
-
-// ======= Components =======
-function OrdersList() {
-  if (typeof window === "undefined") return null as any;
-  const raw = localStorage.getItem("orders");
-  const orders = raw ? JSON.parse(raw) : [];
-  if (!orders.length) {
-    return <div className="text-gray-500 text-sm">لا توجد طلبات بعد.</div>;
-  }
-  return (
-    <div className="space-y-3">
-      {orders.slice(-5).reverse().map((o: any, idx: number) => (
-        <div key={idx} className="border rounded-2xl p-3">
-          <div className="font-semibold">الإجمالي: {o.total} ج.م</div>
-          <div className="text-xs text-gray-500">{o.name} — {o.phone} — {o.city}</div>
-          <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
-        </div>
-      ))}
+        <SectionCard
+          title="الطلبات السابقة"
+          subtitle="(لاحقًا نجلب Orders حسب user.uid)"
+          actions={
+            <button className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm">
+              عرض الكل
+            </button>
+          }
+        >
+          <ul className="space-y-3">
+            <li className="rounded-xl border p-4 text-sm text-gray-600">
+              لا توجد طلبات حتى الآن.
+            </li>
+          </ul>
+        </SectionCard>
+      </div>
     </div>
   );
 }
