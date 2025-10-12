@@ -1,0 +1,1 @@
+export default function Page(){return (<div className='card'><h1 className='font-semibold mb-2'>سياسة shipping</h1><p className='text-sm text-gray-700'>الشحن والتوصيل: 24–48 ساعة داخل القاهرة والجيزة.</p></div>);}

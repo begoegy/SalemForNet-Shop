@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* تهيئة الـ body والخط والاتجاه */
+html, body {
+  height: 100%;
+  background: #f8f9fb;
+  color: #111;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+/* حاوية ثابتة للعرض */
+.sf-container {
+  @apply max-w-7xl mx-auto px-4 md:px-6;
+}
+
+/* بطاقة موحّدة للشكل */
+.card {
+  @apply bg-white rounded-2xl border border-gray-200 p-4 md:p-5 shadow-sm hover:shadow transition;
+}
+
+/* أزرار أساسية */
+.btn {
+  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 border border-gray-300 text-sm;
+}
+.btn-dark {
+  @apply bg-dark text-white border-transparent hover:opacity-90;
+}
+.btn-accent {
+  @apply bg-accent text-white border-transparent hover:opacity-90;
+}
+
+/* عناصر صغيرة متكررة */
+.badge {
+  @apply text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700;
+}
+
+/* شيمر تحميل للصور */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f1f1f1;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* دعم line-clamp لو البلجن مش محمّل */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; 
+  overflow: hidden;
+}
+
+/* ألوان اختصار */
+.text-accent { color: #ef4444; }
+.bg-dark { background-color: #0f1115; }
+.from-dark { --tw-gradient-from: #0f1115 var(--tw-gradient-from-position); --tw-gradient-to: rgb(15 17 21 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-primary { --tw-gradient-to: #1f1f23 var(--tw-gradient-to-position); }
+
+/* روابط */
+a { @apply hover:text-accent; }

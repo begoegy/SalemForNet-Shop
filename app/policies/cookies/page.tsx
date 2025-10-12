@@ -1,0 +1,1 @@
+export default function Page(){return (<div className='card'><h1 className='font-semibold mb-2'>سياسة cookies</h1><p className='text-sm text-gray-700'>ملفات تعريف الارتباط: نستخدم الكوكيز لتحسين التجربة.</p></div>);}

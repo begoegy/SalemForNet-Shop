@@ -1,0 +1,1 @@
+export default function Page(){return (<div className='card'><h1 className='font-semibold mb-2'>سياسة refund</h1><p className='text-sm text-gray-700'>الاسترجاع والإلغاء: خلال 14 يومًا وفق الشروط.</p></div>);}
