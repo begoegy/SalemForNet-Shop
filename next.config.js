@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  images: { unoptimized: true },
-  experimental: { typedRoutes: true }
+  experimental: {
+    // اهم سطر: اقفل التايبد روتس
+    typedRoutes: false,
+  },
 };
+
 module.exports = nextConfig;
