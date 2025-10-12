@@ -1,3 +1,4 @@
+// src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -16,3 +17,6 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// ✅ علشان صفحة checkout تقدر تعرف إذا هنكتب على Firestore ولا وضع تجريبي
+export const firebaseEnabled = process.env.NEXT_PUBLIC_FIREBASE_ENABLED === "true";

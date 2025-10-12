@@ -4,8 +4,9 @@ import data from "@/data/products.json";
 import ProductCard from "@/components/ProductCard";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
-const categories = ["ط±ط§ظˆطھط±ط§طھ","Access Point","ط³ظˆظٹطھط´ط§طھ","ظƒط§ط¨ظ„ط§طھ","ط£ط¯ظˆط§طھ","ط·ط§ظ‚ط©","SFP","CPE"];
+const categories = ["راوترات","Access Point","سويتشات","كابلات","أدوات","طاقة","SFP","CPE"];
 
 export default function CatalogClient() {
   const sp = useSearchParams();
@@ -50,18 +51,18 @@ export default function CatalogClient() {
             ].filter(Boolean).join("&")}`;
             router.replace(next);
           }}
-          placeholder="ط¨ط­ط« ط¨ط§ظ„ط§ط³ظ…/ط§ظ„ظپط¦ط©/ط§ظ„ظ€SKUâ€¦"
+          placeholder="ابحث بالاسم/الفئة/SKU…"
           className="border rounded-2xl px-4 py-2 w-full md:max-w-md"
         />
         <select value={cat||""} onChange={e=>onChangeCat(e.target.value || "")} className="border rounded-2xl px-4 py-2">
-          <option value="">ظƒظ„ ط§ظ„ظپط¦ط§طھ</option>
+          <option value="">كل الفئات</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {filtered.map(p => <ProductCard key={p.id} p={p as any} />)}
         {filtered.length===0 && (
-          <div className="col-span-full card">ظ„ط§ ظ†طھط§ط¦ط¬ ظ…ط·ط§ط¨ظ‚ط©. ط¬ط±ظ‘ط¨ ظƒظ„ظ…ط© ط£ظ‚طµط± ط£ظˆ ظپط¦ط© ظ…ط®طھظ„ظپط©.</div>
+          <div className="col-span-full card">لا نتائج مطابقة. جرّب كلمة أقصر أو فئة مختلفة.</div>
         )}
       </div>
     </div>
