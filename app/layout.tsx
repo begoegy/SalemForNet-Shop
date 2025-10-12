@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Link from "next/link";
 import Footer from "@/components/Footer";
-import { LanguageProvider } from "@/components/LanguageProvider";
+import LanguageProvider from "@/components/LanguageProvider";
 import { CartProvider } from "@/components/cart/CartContext";
 import CartButton from "@/components/CartButton";
 
