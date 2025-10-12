@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useLang } from "./LanguageProvider";
 import { useCart } from "./cart/CartContext";
 import Search from "./Search";
+import CartButton from "./CartButton";
 
 function Brand() {
   return (
@@ -44,23 +45,24 @@ export default function Header() {
 
       {/* شريط وسط: لوجو + سيرش + السلة */}
       <div className="sf-container py-4 flex items-center gap-4">
-        <Brand />
-        <div className="flex-1 flex justify-center"><Search /></div>
-        <Link href="/cart" className="relative font-semibold hover:text-accent">
-          🛒 السلة
-          <span className="absolute -top-2 -right-3 bg-accent text-white text-xs px-2 py-0.5 rounded-full">{count}</span>
-        </Link>
+  <Brand />
+  <div className="flex-1 flex justify-center">
+    <Search />
+  </div>
+  <CartButton />
+</div>
+        
       </div>
 
       {/* تنقل */}
-      <nav className="sf-container py-2 flex gap-5 text-sm">
-        <Link className="hover:text-accent" href="/catalog">{t.catalog}</Link>
+      <nav className="sf-container py-2 flex gap-5 text-sm"><Link className="hover:text-accent" href="/catalog">{t.catalog}</Link>
         <Link className="hover:text-accent" href="/account">{t.account}</Link>
         <Link className="hover:text-accent" href="/policies/privacy">الخصوصية</Link>
         <Link className="hover:text-accent" href="/policies/terms">الشروط</Link>
         <Link className="hover:text-accent" href="/policies/shipping">الشحن</Link>
         <Link className="hover:text-accent" href="/contact">تواصل</Link>
-      </nav>
+  <Link className="hover:text-accent" href="/catalog?offer=1">العروض</Link>
+</nav>
     </header>
   );
 }
