@@ -127,7 +127,7 @@ const products = (data as any[]) ?? [];
             </div>
 
             {/* زر الدفع أونلاين - داخل JSX (مكان صحيح) */}
-            {provider === "paymob" && total > 0 && user && (
+            {total > 0 && user && (
               <div className="mt-4">
                 <PaymobPayButton
                   label="دفع أونلاين"
@@ -146,3 +146,4 @@ const products = (data as any[]) ?? [];
     </div>
   );
 }
+
