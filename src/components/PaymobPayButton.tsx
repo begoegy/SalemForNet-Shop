@@ -8,7 +8,8 @@ type Props = {
   phone: string;
   firstName: string;
   lastName?: string;
-  merchantOrderId: string; // خليه = رقم/معرف الطلب عندك
+  merchantOrderId: string; // رقم/معرف الطلب
+  label?: string; // نص الزرار (اختياري)
 };
 
 export default function PaymobPayButton(props: Props) {
@@ -20,13 +21,26 @@ export default function PaymobPayButton(props: Props) {
       const res = await fetch("/api/paymob/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(props),
+        body: JSON.stringify({
+          amount: props.amount,
+          email: props.email,
+          phone: props.phone,
+          firstName: props.firstName,
+          lastName: props.lastName ?? "",
+          merchantOrderId: props.merchantOrderId,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "failed");
-      window.location.href = data.iframeUrl; // تحويل مباشر لـ Iframe Page
-    } catch (e: any) {
-      alert(e.message ?? "خطأ في إنشاء عملية الدفع");
+      let data: any = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) {
+        console.error("Paymob intent failed:", { status: res.status, data });
+        alert(`فشل إنشاء عملية الدفع: ${data?.error || res.statusText || "غير معروف"}`);
+        return;
+      }
+      window.location.href = data.iframeUrl;
+    } catch (err: any) {
+      console.error("payWithPaymob fatal:", err);
+      alert(`حصل خطأ أثناء تهيئة الدفع: ${err?.message || "غير معروف"}`);
     } finally {
       setLoading(false);
     }
@@ -38,7 +52,7 @@ export default function PaymobPayButton(props: Props) {
       disabled={loading}
       className="w-full rounded-xl bg-black text-white py-3 font-medium hover:opacity-90 disabled:opacity-50"
     >
-      {loading ? "جاري التحويل..." : "ادفع الآن (Paymob)"}
+      {loading ? "جاري التحويل..." : (props.label ?? "دفع أونلاين")}
     </button>
   );
 }

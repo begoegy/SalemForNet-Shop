@@ -9,11 +9,13 @@ import { firebaseEnabled, db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext"; // موحّد
 import { useRouter } from "next/navigation";
+import PaymobPayButton from "@/components/PaymobPayButton";
 
 export default function CheckoutPageClient() {
   const { items, clear } = useCart();
   const { user, loading } = useAuth();
   const router = useRouter();
+  const provider = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER ?? "mock";
 
   const products = data as any[];
   const rows = items
@@ -153,5 +155,19 @@ export default function CheckoutPageClient() {
         <div className="mt-3 border-t pt-3 font-semibold">الإجمالي: {egp(total)}</div>
       </div>
     </div>
+        {provider === "paymob" && total > 0 && user && (
+          <div className="mt-4">
+            <PaymobPayButton
+              label="دفع أونلاين"
+              amount={total}
+              email={user?.email ?? "customer@example.com"}
+              phone={typeof (phone as any) === "string" ? (phone as any) : "01000000000"}
+              firstName={typeof (name as any) === "string" ? (name as any) : (user?.displayName ?? "Customer")}
+              lastName=""
+              merchantOrderId={typeof (orderRef as any) === "string" && (orderRef as any).length ? (orderRef as any) : `SFN-${Date.now()}`}
+            />
+          </div>
+        )}
+
   );
 }
