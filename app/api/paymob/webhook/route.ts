@@ -1,77 +1,88 @@
-// app/api/paymob/webhook/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { verifyHmac } from "@/lib/paymob";
-import { getDbOrNull } from "@/lib/firebaseAdmin";
+﻿import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import admin from "@/lib/firebaseAdmin";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// ترتيب الحقول حسب Paymob لاحتساب HMAC
-function buildOrderedForHmac(obj: any) {
-  const tx = obj.obj ?? obj; // بعض الإصدارات ترسل داخل obj
-  // لو return_url: fields مختلفة قليلًا — هنا نتعامل مع webhook الرسمي للـ transaction
-  const orderId = tx?.order?.id ?? tx?.order_id;
-  const source = tx?.source_data ?? {};
-  const ordered = [
-    String(tx.amount_cents ?? ""),
-    String(tx.created_at ?? ""),
-    String(tx.currency ?? ""),
-    String(tx.error_occured ?? ""),
-    String(tx.has_parent_transaction ?? ""),
-    String(tx.id ?? ""),
-    String(tx.integration_id ?? ""),
-    String(tx.is_3d_secure ?? ""),
-    String(tx.is_auth ?? ""),
-    String(tx.is_capture ?? ""),
-    String(tx.is_refunded ?? ""),
-    String(tx.is_standalone_payment ?? ""),
-    String(tx.is_voided ?? ""),
-    String(orderId ?? ""),
-    String(tx.owner ?? ""),
-    String(tx.pending ?? ""),
-    String(source.pan ?? ""),
-    String(source.sub_type ?? ""),
-    String(source.type ?? ""),
-    String(tx.success ?? ""),
+const db = admin.firestore();
+
+function get(path: string, obj: any) {
+  try {
+    return path.split(".").reduce((o, k) => (o ? o[k] : undefined), obj) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function buildConcatenatedString(obj: any) {
+  const fields = [
+    "amount_cents",
+    "created_at",
+    "currency",
+    "error_occured",
+    "has_parent_transaction",
+    "id",
+    "integration_id",
+    "is_3d_secure",
+    "is_auth",
+    "is_capture",
+    "is_refunded",
+    "is_standalone_payment",
+    "is_voided",
+    "order.id",
+    "owner",
+    "pending",
+    "source_data.pan",
+    "source_data.sub_type",
+    "source_data.type",
+    "success",
   ];
-  return ordered;
+  return fields.map((f) => String(get(f, obj))).join("");
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const givenHmac = body?.hmac || body?.obj?.hmac;
-  const secret = process.env.PAYMOB_HMAC_SECRET!;
-
   try {
-    const ordered = buildOrderedForHmac(body);
-    const ok = verifyHmac(secret, ordered, givenHmac);
-    if (!ok) return NextResponse.json({ ok: false, reason: "HMAC mismatch" }, { status: 401 });
+    const hmacSecret = process.env.PAYMOB_HMAC_SECRET!;
+    if (!hmacSecret) return NextResponse.json({ ok: false, reason: "missing hmac secret" }, { status: 200 });
 
-    const success = Boolean(body?.obj?.success ?? body?.success);
-    const merchantOrderId = body?.obj?.merchant_order_id ?? body?.merchant_order_id;
+    const body = await req.json();
+    const sentHmac = req.nextUrl.searchParams.get("hmac") || body?.hmac || "";
+    const concatenated = buildConcatenatedString(body?.obj || body);
 
-    // ✅ تحديث حالة الطلب في Firestore (اختياري)
-    try {
-      const db = getDbOrNull();
-      if (db && merchantOrderId) {
-        await db.collection("orders").doc(String(merchantOrderId)).set(
-          {
-            payment: {
-              provider: "paymob",
+    const computed = crypto
+      .createHmac("sha512", hmacSecret)
+      .update(concatenated)
+      .digest("hex");
+
+    const valid = sentHmac?.toLowerCase() === computed?.toLowerCase();
+
+    console.log("[webhook] valid:", valid, "order:", get("order.id", body?.obj || body), "tx:", get("id", body?.obj || body));
+
+    if (valid) {
+      const success = String(get("success", body?.obj || body)) === "true";
+      const merchantOrderId = String(get("order.merchant_order_id", body?.obj || body) || "");
+
+      if (merchantOrderId) {
+        try {
+          await db.collection("orders").doc(merchantOrderId).set(
+            {
               status: success ? "paid" : "failed",
-              paymobOrderId: body?.obj?.order?.id ?? null,
-              transactionId: body?.obj?.id ?? null,
-              updatedAt: new Date(),
+              payment: { method: "paymob", status: success ? "paid" : "failed", tx: get("id", body?.obj || body) },
+              paymob: body?.obj || body,
+              updated_at: admin.firestore.FieldValue.serverTimestamp(),
             },
-          },
-          { merge: true }
-        );
+            { merge: true }
+          );
+        } catch (e) {
+          console.error("[webhook] firestore update error:", e);
+        }
       }
-    } catch (err) {
-      console.error("Firestore update skipped/failed:", err);
     }
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: e?.message ?? "webhook failed" }, { status: 500 });
+    console.error("[paymob/webhook] error:", e?.message || e);
+    return NextResponse.json({ ok: false }, { status: 200 });
   }
 }
