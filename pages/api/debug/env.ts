@@ -1,9 +1,7 @@
-﻿// app/api/debug/env/route.ts  (App Router)
-import { NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+﻿// pages/api/debug/env.ts  (Pages Router fallback)
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export async function GET() {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const keys = [
     "PAYMOB_API_KEY",
     "PAYMOB_INTEGRATION_ID",
@@ -15,5 +13,5 @@ export async function GET() {
   const present = Object.fromEntries(
     keys.map(k => [k, !!process.env[k] && String(process.env[k]).trim().length > 0])
   );
-  return NextResponse.json({ present });
+  res.status(200).json({ present });
 }

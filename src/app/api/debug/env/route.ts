@@ -1,4 +1,4 @@
-﻿// app/api/debug/env/route.ts  (App Router)
+﻿// src/app/api/debug/env/route.ts  (App Router داخل src/)
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
