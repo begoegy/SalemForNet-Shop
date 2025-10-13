@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -29,19 +29,7 @@ export default function CheckoutPage() {
   const [status, setStatus] = useState<"idle" | "saving" | "ok" | "fail">("idle");
   const [orderRef, setOrderRef] = useState<string | undefined>(undefined);
 
-  if (rows.length === 0) {
-    return (
-      <div className="card">
-        <p className="text-center">
-          السلة فارغة —{" "}
-          <Link className="text-accent" href="/catalog">
-            اذهب للكتالوج
-          </Link>
-        </p>
-      </div>
-    );
-  }
-
+  // ====== الدفع عند الاستلام (تأكيد الطلب) ======
   const placeOrder = async () => {
     try {
       setStatus("saving");
@@ -63,14 +51,14 @@ export default function CheckoutPage() {
           })),
           total,
           status: "placed",
+          payment: { method: "cod", status: "pending" },
           customer: {
             name: name || user.displayName || "",
             email: user.email || "",
             phone,
+            address,
           },
-          payment: { method: "cod", status: "pending" },
           created_at: serverTimestamp(),
-          // address, // لو عايز تحفظه: أضِفه للقواعد أو ضعْه داخل customer.address
         };
 
         const docRef = await addDoc(collection(db, "orders"), payload);
@@ -78,6 +66,7 @@ export default function CheckoutPage() {
         router.push(`/orders?id=${docRef.id}`);
         return;
       } else {
+        // وضع تجريبي بدون Firebase
         setOrderRef("SFN-" + Date.now());
       }
 
@@ -88,8 +77,121 @@ export default function CheckoutPage() {
     }
   };
 
+  // ====== الدفع الأونلاين (Paymob أو Mock حسب .env.local) ======
+  const payWithPaymob = async () => {
+    try {
+      if (loading) return;
+      if (!user) {
+        alert("سجّل الدخول أولاً لإتمام الدفع.");
+        return;
+      }
+      if (!phone || !name) {
+        alert("ادخل الاسم ورقم الهاتف أولاً.");
+        return;
+      }
+
+      // نحدّد المزود من متغير البيئة (mock أو paymob)
+      const provider =
+        typeof process !== "undefined" && (process as any)?.env?.NEXT_PUBLIC_PAYMENT_PROVIDER
+          ? (process as any).env.NEXT_PUBLIC_PAYMENT_PROVIDER
+          : "mock";
+
+      // إنشاء Order pending أولاً (لو Firebase مفعّل)
+      let merchantOrderId = "";
+      if (firebaseEnabled) {
+        const payload = {
+          userId: user.uid,
+          items: rows.map((r) => ({
+            product_id: r.p.id,
+            sku: r.p.sku,
+            qty: r.qty,
+            unit_price: r.p.price_egp ?? 0,
+          })),
+          total,
+          status: "pending",
+          payment: { method: provider === "mock" ? "mock" : "paymob", status: "pending" },
+          customer: {
+            name: name || user.displayName || "",
+            email: user.email || "",
+            phone,
+            address,
+          },
+          created_at: serverTimestamp(),
+        };
+        const docRef = await addDoc(collection(db, "orders"), payload);
+        merchantOrderId = docRef.id;
+      } else {
+        merchantOrderId = "SFN-" + Date.now();
+      }
+
+      if (provider === "mock") {
+        // مزود دفع تجريبي محلي
+        const res = await fetch("/api/mock/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            phone,
+            address,
+            amount: total,
+            merchantOrderId,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.ok) {
+          alert("فشل الدفع التجريبي. راجع البيانات.");
+          return;
+        }
+        // محاكاة نجاح الدفع
+        window.location.href = `/pay/return?success=true&order=${encodeURIComponent(merchantOrderId)}`;
+        return;
+      }
+
+      // === المزود الحقيقي (Paymob) ===
+      const [firstName, ...rest] = (name || "").trim().split(" ");
+      const lastName = rest.join(" ");
+      const res = await fetch("/api/paymob/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          email: user.email || "",
+          phone,
+          firstName: firstName || "Customer",
+          lastName,
+          merchantOrderId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error(data);
+        alert(data?.error || "فشل إنشاء عملية الدفع");
+        return;
+      }
+      // تحويل مباشر لصفحة Iframe
+      window.location.href = data.iframeUrl;
+    } catch (err) {
+      console.error(err);
+      alert("حصل خطأ أثناء تهيئة الدفع.");
+    }
+  };
+
+  if (rows.length === 0) {
+    return (
+      <div className="card">
+        <p className="text-center">
+          السلة فارغة —{" "}
+          <Link className="text-accent" href="/catalog">
+            اذهب للكتالوج
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
+      {/* بيانات العميل */}
       <div className="card space-y-3">
         <h2 className="font-semibold mb-1">بيانات العميل</h2>
 
@@ -126,23 +228,30 @@ export default function CheckoutPage() {
             {loading ? "جارٍ التحقق..." : status === "saving" ? "جارٍ الإرسال..." : "تأكيد الطلب"}
           </button>
 
+          {/* زر الدفع الأونلاين — يعتمد على المزود من env */}
+          <button
+            onClick={payWithPaymob}
+            disabled={status === "saving" || loading}
+            className="px-4 py-2 rounded bg-accent text-white disabled:opacity-60"
+          >
+            {process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === "paymob"
+              ? "ادفع أونلاين (Paymob)"
+              : "ادفع أونلاين (تجريبي)"}
+          </button>
+
           {status === "ok" && (
             <span className="text-green-700 text-sm">
-              تم إنشاء الطلب بنجاح {orderRef ? `(رقم: ${orderRef})` : ""}.
+              {orderRef ? `تم إنشاء الطلب بنجاح (رقم: ${orderRef})` : "تم إنشاء الطلب بنجاح"}
             </span>
           )}
-          {status === "fail" && (
-            <span className="text-red-600 text-sm">حدث خطأ أثناء إنشاء الطلب.</span>
-          )}
-          {!firebaseEnabled && (
-            <span className="text-xs text-gray-500">ⓘ وضع تجريبي (بدون Firestore)</span>
-          )}
+          {status === "fail" && <span className="text-red-600 text-sm">حدث خطأ أثناء إنشاء الطلب.</span>}
         </div>
       </div>
 
+      {/* ملخص الطلب */}
       <div className="card">
-        <h2 className="font-semibold mb-3">ملخص الطلب</h2>
-        <ul className="space-y-2 text-sm">
+        <h2 className="font-semibold mb-2">ملخص الطلب</h2>
+        <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.id} className="flex justify-between">
               <span>

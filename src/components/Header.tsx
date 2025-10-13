@@ -4,6 +4,7 @@ import { useLang } from "./LanguageProvider";
 import { useCart } from "./cart/CartContext";
 import Search from "./Search";
 import CartButton from "./CartButton";
+import AccountActions from "./AccountActions";
 
 function Brand() {
   return (
@@ -14,55 +15,44 @@ function Brand() {
       </div>
       <div className="leading-none">
         <div className="text-2xl font-extrabold tracking-tight">
-          SalemForNet <span className="text-accent">Shop</span>
+          SalemForNet
         </div>
-        <div className="text-[11px] text-gray-500 -mt-0.5">Networking Accessories</div>
+        <div className="text-[10px] opacity-70 -mt-1">شبكتي</div>
       </div>
     </Link>
   );
 }
 
 export default function Header() {
-  const { lang, setLang, t } = useLang();
+  const { t } = useLang();
   const { count } = useCart();
+
   return (
-    <header className="bg-white sticky top-0 z-40 border-b">
-      {/* شريط علوي */}
-      <div className="bg-dark text-white text-sm">
-        <div className="sf-container py-2 flex items-center justify-between">
-          <div className="flex gap-4">
-            <a href={`tel:${process.env.NEXT_PUBLIC_SUPPORT_PHONE}`} className="hover:underline">📞 {process.env.NEXT_PUBLIC_SUPPORT_PHONE}</a>
-            <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP}`} className="hover:underline">💬 {process.env.NEXT_PUBLIC_WHATSAPP}</a>
-            <a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`} className="hover:underline">✉️ {process.env.NEXT_PUBLIC_SUPPORT_EMAIL}</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setLang(lang === "ar" ? "en" : "ar")} className="text-xs border px-2 py-1 rounded">
-              {lang === "ar" ? "EN" : "AR"}
-            </button>
-          </div>
+    <header className="border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-40">
+      {/* الشريط العلوي */}
+      <div className="sf-container py-3 flex items-center justify-between gap-4">
+        <Brand />
+
+        <div className="flex-1 max-w-2xl">
+          <Search />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <CartButton />
+          <AccountActions />
         </div>
       </div>
 
-      {/* شريط وسط: لوجو + سيرش + السلة */}
-      <div className="sf-container py-4 flex items-center gap-4">
-  <Brand />
-  <div className="flex-1 flex justify-center">
-    <Search />
-  </div>
-  <CartButton />
-</div>
-        
-      </div>
-
       {/* تنقل */}
-      <nav className="sf-container py-2 flex gap-5 text-sm"><Link className="hover:text-accent" href="/catalog">{t.catalog}</Link>
+      <nav className="sf-container py-2 flex gap-5 text-sm">
+        <Link className="hover:text-accent" href="/catalog">{t.catalog}</Link>
         <Link className="hover:text-accent" href="/account">{t.account}</Link>
         <Link className="hover:text-accent" href="/policies/privacy">الخصوصية</Link>
         <Link className="hover:text-accent" href="/policies/terms">الشروط</Link>
         <Link className="hover:text-accent" href="/policies/shipping">الشحن</Link>
         <Link className="hover:text-accent" href="/contact">تواصل</Link>
-  <Link className="hover:text-accent" href="/catalog?offer=1">العروض</Link>
-</nav>
+        <Link className="hover:text-accent" href="/catalog?offer=1">العروض</Link>
+      </nav>
     </header>
   );
 }
