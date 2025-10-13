@@ -1,6 +1,6 @@
 // app/api/paymob/intent/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { paymobAuth, createPaymobOrder, createPaymentKey, paymentIframeUrl } from "@/src/lib/paymob";
+import { paymobAuth, createPaymobOrder, createPaymentKey, paymentIframeUrl } from "@/lib/paymob";
 
 export const dynamic = "force-dynamic";
 

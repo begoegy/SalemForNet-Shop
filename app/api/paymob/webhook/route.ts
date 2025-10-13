@@ -1,7 +1,7 @@
 // app/api/paymob/webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { verifyHmac } from "@/src/lib/paymob";
-import { getDbOrNull } from "@/src/lib/firebaseAdmin";
+import { verifyHmac } from "@/lib/paymob";
+import { getDbOrNull } from "@/lib/firebaseAdmin";
 
 export const dynamic = "force-dynamic";
 
