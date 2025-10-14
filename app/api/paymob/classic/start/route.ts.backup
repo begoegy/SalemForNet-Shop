@@ -1,0 +1,143 @@
+﻿import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const BASE = "https://accept.paymob.com";
+
+type CartItem = {
+  name: string;
+  amount_cents: number; // price per item in cents
+  quantity: number;
+  description?: string;
+};
+
+type BillingData = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  apartment: string;
+  floor: string;
+  street: string;
+  building: string;
+  city: string;
+  country: string; // "EG"
+  state: string;
+  postal_code?: string;
+};
+
+export async function POST(req: NextRequest) {
+  try {
+    const {
+      amount_cents,
+      currency = "EGP",
+      merchant_order_id,
+      items = [] as CartItem[],
+      billing_data = {} as Partial<BillingData>,
+      lock_order_when_paid = true,
+    } = await req.json();
+
+    const API_KEY = process.env.PAYMOB_API_KEY!;
+    const INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID!;
+    const IFRAME_ID = process.env.PAYMOB_IFRAME_ID!;
+    if (!API_KEY || !INTEGRATION_ID || !IFRAME_ID) {
+      return NextResponse.json(
+        { error: "missing_env", message: "Missing PAYMOB_API_KEY / PAYMOB_INTEGRATION_ID / PAYMOB_IFRAME_ID" },
+        { status: 500 }
+      );
+    }
+
+    if (!Number.isInteger(amount_cents) || amount_cents <= 0) {
+      return NextResponse.json(
+        { error: "bad_amount", message: "amount_cents must be integer > 0 (in cents)" },
+        { status: 400 }
+      );
+    }
+
+    // 1) AUTH
+    const authRes = await fetch(`${BASE}/api/auth/tokens`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: API_KEY }),
+    });
+    if (!authRes.ok) {
+      const t = await authRes.text();
+      return NextResponse.json({ step: "auth", details: t }, { status: 502 });
+    }
+    const { token: auth_token } = await authRes.json();
+
+    // 2) ORDER
+    const orderRes = await fetch(`${BASE}/api/ecommerce/orders`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        auth_token,
+        delivery_needed: false,
+        amount_cents,
+        currency,
+        merchant_order_id: merchant_order_id ?? `SFN-${Date.now()}`,
+        items: items.map((i) => ({
+          name: i.name,
+          amount_cents: i.amount_cents,
+          quantity: i.quantity,
+          description: i.description ?? "",
+        })),
+      }),
+    });
+    if (!orderRes.ok) {
+      const t = await orderRes.text();
+      return NextResponse.json({ step: "order", details: t }, { status: 502 });
+    }
+    const orderJson = await orderRes.json();
+    const order_id = orderJson?.id;
+
+    // 3) PAYMENT KEY
+    const fullBilling: BillingData = {
+      first_name: billing_data.first_name ?? "Customer",
+      last_name: billing_data.last_name ?? "SFN",
+      email: billing_data.email ?? "customer@example.com",
+      phone_number: billing_data.phone_number ?? "01000000000",
+      apartment: billing_data.apartment ?? "NA",
+      floor: billing_data.floor ?? "NA",
+      street: billing_data.street ?? "NA",
+      building: billing_data.building ?? "NA",
+      city: billing_data.city ?? "Giza",
+      country: billing_data.country ?? "EG",
+      state: billing_data.state ?? "GZ",
+      postal_code: billing_data.postal_code ?? "00000",
+    };
+
+    const payKeyRes = await fetch(`${BASE}/api/acceptance/payment_keys`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        auth_token,
+        amount_cents,
+        currency,
+        order_id,
+        integration_id: Number(INTEGRATION_ID),
+        lock_order_when_paid,
+        billing_data: fullBilling,
+      }),
+    });
+    if (!payKeyRes.ok) {
+      const t = await payKeyRes.text();
+      return NextResponse.json({ step: "payment_key", details: t }, { status: 502 });
+    }
+    const { token: payment_token } = await payKeyRes.json();
+
+    // 4) IFRAME URL
+    const iframeUrl = `${BASE}/api/acceptance/iframes/${encodeURIComponent(
+      IFRAME_ID
+    )}?payment_token=${encodeURIComponent(payment_token)}`;
+
+    return NextResponse.json({ order_id, payment_token, iframeUrl });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: "server_error", message: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
+  }
+}

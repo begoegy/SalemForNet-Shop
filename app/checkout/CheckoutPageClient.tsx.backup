@@ -1,5 +1,4 @@
 ﻿"use client";
-
 import { useCart } from "@/components/cart/CartContext";
 import { useState } from "react";
 import data from "@/data/products.json";
@@ -10,31 +9,25 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import PaymobPayButton from "@/components/PaymobPayButton";
-
 type Row = { id: string; qty: number; p: any };
-
 function makeLocalOrderRef() {
   return `SFN-${Date.now()}`;
 }
-
 export default function CheckoutPageClient() {
   const { items } = useCart();
   const { user, loading } = useAuth();
   const router = useRouter();
-
-  const products = (data as any[]) ?? [];
+const products = (data as any[]) ?? [];
   const rows: Row[] = items
     .map((i) => ({ id: i.id, qty: i.qty, p: products.find((x) => x.id === i.id) }))
     .filter((r) => r.p);
 
-  const total = rows.reduce(
-    (sum, r) => sum + (Number(r.p?.price_egp ?? 0) * r.qty),
-    0
-  );
+  const total = rows.reduce((sum, r) => sum + (Number(r.p?.price_egp ?? 0) * r.qty), 0);
 
   const [status, setStatus] = useState<"idle" | "success" | "fail">("idle");
   const [orderRef, setOrderRef] = useState<string>("");
 
+  // بيتحدد أثناء الـ build — اتأكد في Vercel إن NEXT_PUBLIC_PAYMENT_PROVIDER=paymob
   const provider = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER ?? "mock";
 
   async function submit() {
@@ -55,11 +48,7 @@ export default function CheckoutPageClient() {
           const payload = {
             uid: user.uid,
             email: user.email ?? "",
-            items: rows.map((r) => ({
-              id: r.id,
-              qty: r.qty,
-              price_egp: r.p?.price_egp ?? 0,
-            })),
+            items: rows.map((r) => ({ id: r.id, qty: r.qty, price_egp: r.p?.price_egp ?? 0 })),
             total_egp: total,
             provider,
             createdAt: serverTimestamp(),
@@ -92,10 +81,7 @@ export default function CheckoutPageClient() {
 
         {rows.length === 0 ? (
           <div className="text-sm text-neutral-600">
-            السلة فارغة —{" "}
-            <Link href="/catalog" className="underline">
-              اذهب للكتالوج
-            </Link>
+            السلة فارغة — <Link href="/catalog" className="underline">اذهب للكتالوج</Link>
           </div>
         ) : (
           <>
@@ -112,12 +98,10 @@ export default function CheckoutPageClient() {
             </ul>
 
             {/* الإجمالي */}
-            <div className="mt-3 border-t pt-3 font-semibold">
-              الإجمالي: {egp(total)}
-            </div>
+            <div className="mt-3 border-t pt-3 font-semibold">الإجمالي: {egp(total)}</div>
 
-            {/* أزرار الإجراء (زر واحد للدفع) */}
-            <div className="mt-3 flex flex-col md:flex-row gap-3">
+            {/* أزرار الإجراء */}
+            <div className="mt-3 flex gap-3">
               <button
                 onClick={submit}
                 disabled={loading}
@@ -125,26 +109,9 @@ export default function CheckoutPageClient() {
               >
                 {loading ? "جار التحقق..." : "تأكيد الطلب"}
               </button>
-
-              <Link href="/cart" className="px-4 py-2 rounded border text-center">
+              <Link href="/cart" className="px-4 py-2 rounded border">
                 الرجوع للسلة
               </Link>
-
-              {/* زر الدفع أونلاين — الإجمالي متبَعِت صراحة */}
-              {total > 0 && (
-                <PaymobPayButton
-                  className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 text-center"
-                  label="الدفع بالبطاقة (Paymob)"
-                  amount={total}
-                  email={user?.email ?? "customer@example.com"}
-                  phone={"01000000000"}
-                  firstName={user?.displayName?.split(" ")?.[0] ?? "Customer"}
-                  lastName=""
-                  merchantOrderId={
-                    orderRef && orderRef.length ? orderRef : makeLocalOrderRef()
-                  }
-                />
-              )}
             </div>
 
             {/* إشعارات الحالة */}
@@ -155,14 +122,28 @@ export default function CheckoutPageClient() {
                 </span>
               )}
               {status === "fail" && (
-                <span className="text-red-600 text-sm">
-                  حدث خطأ أثناء إنشاء الطلب.
-                </span>
+                <span className="text-red-600 text-sm">حدث خطأ أثناء إنشاء الطلب.</span>
               )}
             </div>
+
+            {/* زر الدفع أونلاين - داخل JSX (مكان صحيح) */}
+            {total > 0 && user && (
+              <div className="mt-4">
+                <PaymobPayButton
+                  label="دفع أونلاين"
+                  amount={total}
+                  email={user.email ?? "customer@example.com"}
+                  phone={"01000000000"}
+                  firstName={(user.displayName?.split(" ")?.[0] ?? "Customer")}
+                  lastName=""
+                  merchantOrderId={orderRef && orderRef.length ? orderRef : makeLocalOrderRef()}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
     </div>
   );
 }
+
