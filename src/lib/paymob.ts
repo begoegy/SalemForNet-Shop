@@ -1,35 +1,10 @@
 // src/lib/paymob.ts
-import crypto from "crypto";
-
 const BASE = "https://accept.paymob.com/api";
 
-export type BillingData = {
-  email: string;
-  first_name: string;
-  last_name?: string;
-  phone_number: string;
-  apartment?: string;
-  floor?: string;
-  street?: string;
-  building?: string;
-  city?: string;
-  country?: string;
-  state?: string;
-  shipping_method?: string;
-};
-
-/** Read env safely (throw descriptive errors in server env only) */
-function needEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing required env: ${name}`);
+function needEnv(k: string): string {
+  const v = process.env[k];
+  if (!v) throw new Error(`Missing env ${k}`);
   return v;
-}
-
-/** Determine integration id: prefer PAYMOB_CARD_MIGS_INTEGRATION_ID if present */
-function resolveIntegrationId(): string {
-  return process.env.PAYMOB_CARD_MIGS_INTEGRATION_ID
-    || process.env.PAYMOB_INTEGRATION_ID
-    || "";
 }
 
 export async function paymobAuth() {
@@ -44,22 +19,20 @@ export async function paymobAuth() {
     const txt = await res.text();
     throw new Error(`Paymob auth failed: ${res.status} ${txt}`);
   }
-  return res.json() as Promise<{ token: string }>;
+  return (await res.json()) as { token: string };
 }
 
 export async function createPaymobOrder(auth: { token: string }, amountCents: number, merchantOrderId?: string) {
   const res = await fetch(`${BASE}/ecommerce/orders`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Token ${auth.token}`,
-    },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store",
     body: JSON.stringify({
+      auth_token: auth.token,
+      delivery_needed: false,
       amount_cents: amountCents,
       currency: "EGP",
-      delivery_needed: false,
-      merchant_order_id: merchantOrderId || `SFN-${Date.now()}`,
+      merchant_order_id: merchantOrderId ?? undefined,
       items: [],
     }),
   });
@@ -67,46 +40,46 @@ export async function createPaymobOrder(auth: { token: string }, amountCents: nu
     const txt = await res.text();
     throw new Error(`Create order failed: ${res.status} ${txt}`);
   }
-  return res.json() as Promise<{ id: number }>;
+  return (await res.json()) as { id: number };
 }
 
-export async function createPaymentKey(
-  auth: { token: string },
-  amountCents: number,
-  orderId: number,
-  billing: BillingData
-) {
-  const integrationId = resolveIntegrationId();
-  if (!integrationId) throw new Error("Missing PAYMOB_CARD_MIGS_INTEGRATION_ID / PAYMOB_INTEGRATION_ID");
+type BillingData = {
+  email: string;
+  phone_number: string;
+  first_name: string;
+  last_name?: string;
+};
 
-  // Normalize minimal billing fields to satisfy Paymob
-  const b: BillingData = {
-    email: billing.email,
-    first_name: billing.first_name,
-    last_name: billing.last_name ?? "",
-    phone_number: billing.phone_number,
-    apartment: billing.apartment ?? "NA",
-    floor: billing.floor ?? "NA",
-    street: billing.street ?? "NA",
-    building: billing.building ?? "NA",
-    city: billing.city ?? "Giza",
-    country: billing.country ?? "EG",
-    state: billing.state ?? "Giza",
-    shipping_method: billing.shipping_method ?? "UNK",
-  };
+export async function createPaymentKey(auth: { token: string }, amountCents: number, orderId: number, billing: BillingData) {
+  const integrationId = process.env.PAYMOB_CARD_MIGS_INTEGRATION_ID || process.env.PAYMOB_INTEGRATION_ID;
+  if (!integrationId) throw new Error("No Integration ID configured");
+  const iframeId = needEnv("PAYMOB_IFRAME_ID");
 
   const res = await fetch(`${BASE}/acceptance/payment_keys`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Token ${auth.token}`,
-    },
+    headers: { "Content-Type": "application/json" },
     cache: "no-store",
     body: JSON.stringify({
+      auth_token: auth.token,
       amount_cents: amountCents,
       currency: "EGP",
+      expiration: 3600,
       order_id: orderId,
-      billing_data: b,
+      billing_data: {
+        email: billing.email,
+        phone_number: billing.phone_number,
+        first_name: billing.first_name,
+        last_name: billing.last_name ?? "",
+        apartment: "NA",
+        floor: "NA",
+        street: "NA",
+        building: "NA",
+        shipping_method: "NA",
+        postal_code: "NA",
+        city: "Giza",
+        country: "EG",
+        state: "Giza",
+      },
       integration_id: Number(integrationId),
       lock_order_when_paid: true,
     }),
@@ -115,7 +88,8 @@ export async function createPaymentKey(
     const txt = await res.text();
     throw new Error(`Create payment key failed: ${res.status} ${txt}`);
   }
-  return res.json() as Promise<{ token: string }>;
+  const data = await res.json();
+  return { token: data.token as string, iframeId };
 }
 
 export function paymentIframeUrl(paymentToken: string) {
@@ -123,14 +97,4 @@ export function paymentIframeUrl(paymentToken: string) {
   return `https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${paymentToken}`;
 }
 
-/**
- * Verify HMAC using Paymob docs ordering.
- * @param hmacSecret PAYMOB_HMAC_SECRET
- * @param orderedKeyValues array of *strings* in exact Paymob order
- * @param givenHmac hex lowercase string from Paymob
- */
-export function verifyHmac(hmacSecret: string, orderedKeyValues: string[], givenHmac: string): boolean {
-  const message = orderedKeyValues.join("");
-  const h = crypto.createHmac("sha512", hmacSecret).update(message).digest("hex");
-  return h === givenHmac;
-}
+export type { BillingData };

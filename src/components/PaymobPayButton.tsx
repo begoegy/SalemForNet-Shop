@@ -1,58 +1,44 @@
-// src/components/PaymobPayButton.tsx
 "use client";
-import { useState } from "react";
+import React from "react";
+import PaymobButton from "@/components/payments/PaymobButton";
+import { useAuth } from "@/context/AuthContext";
 
 type Props = {
-  amount: number;
-  email: string;
-  phone: string;
-  firstName: string;
+  label?: string;
+  amount?: number;
+  email?: string;
+  phone?: string;
+  firstName?: string;
   lastName?: string;
-  merchantOrderId: string; // رقم/معرف الطلب
-  label?: string; // نص الزرار (اختياري)
+  merchantOrderId?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
 };
 
 export default function PaymobPayButton(props: Props) {
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const displayName = props.firstName || user?.displayName || "";
+  const [first, ...rest] = displayName.split(" ").filter(Boolean);
+  const inferredFirst = props.firstName ?? (first || "");
+  const inferredLast = props.lastName ?? (rest.join(" ") || "");
 
-  const onPay = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/paymob/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: props.amount,
-          email: props.email,
-          phone: props.phone,
-          firstName: props.firstName,
-          lastName: props.lastName ?? "",
-          merchantOrderId: props.merchantOrderId,
-        }),
-      });
-      let data: any = null;
-      try { data = await res.json(); } catch {}
-      if (!res.ok) {
-        console.error("Paymob intent failed:", { status: res.status, data });
-        alert(`فشل إنشاء عملية الدفع: ${data?.error || res.statusText || "غير معروف"}`);
-        return;
-      }
-      window.location.href = data.iframeUrl;
-    } catch (err: any) {
-      console.error("payWithPaymob fatal:", err);
-      alert(`حصل خطأ أثناء تهيئة الدفع: ${err?.message || "غير معروف"}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const email = props.email ?? (user?.email || "");
+  const phone = props.phone ?? (user?.phoneNumber || "");
 
   return (
-    <button
-      onClick={onPay}
-      disabled={loading}
-      className="w-full rounded-xl bg-black text-white py-3 font-medium hover:opacity-90 disabled:opacity-50"
+    <PaymobButton
+      totalAmount={props.amount}
+      amount={props.amount}
+      email={email}
+      phone={phone}
+      firstName={inferredFirst || "Customer"}
+      lastName={inferredLast}
+      merchantOrderId={props.merchantOrderId}
+      className={props.className}
+      style={props.style}
     >
-      {loading ? "جاري التحويل..." : (props.label ?? "دفع أونلاين")}
-    </button>
+      {props.children ?? props.label ?? "الدفع بالبطاقة (Paymob)"}
+    </PaymobButton>
   );
 }
